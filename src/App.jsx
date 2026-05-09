@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 const defaultTheme = {
-  title: 'Enterprise Data Cleaning and Analytics',
+  title: 'Cleaning Galing',
   subtitle: 'Upload, profile, clean, compare, analyze, and visualize tabular datasets.',
   primary: '#6d5dfc',
   secondary: '#25c4c2',
@@ -944,7 +944,7 @@ function App() {
         <div className="brand">
           <span className="brand-mark"><FileSpreadsheet size={22} /></span>
           <div>
-            <strong>BAT403</strong>
+            <strong>Cleaning Galing</strong>
             <small>Data Cleaning Explorer</small>
           </div>
         </div>

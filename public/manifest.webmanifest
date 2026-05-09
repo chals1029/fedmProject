@@ -1,6 +1,6 @@
 {
-  "name": "Data Cleaning and Analytics System",
-  "short_name": "Data Cleaner",
+  "name": "Cleaning Galing",
+  "short_name": "Cleaning Galing",
   "description": "Offline-capable data cleaning and analytics workspace.",
   "start_url": "/",
   "display": "standalone",

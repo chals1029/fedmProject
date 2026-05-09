@@ -1,4 +1,4 @@
-# Data Cleaning and Analytics System
+# Cleaning Galing
 
 BAT403 - Foundations of Enterprise Data Management
 
@@ -8,7 +8,7 @@ Upload -> Profile -> Clean -> Analyze -> Visualize
 
 ## Project Description
 
-This project involves the design and development of a Data Cleaning and Analytics System that allows users to upload raw datasets, perform data cleaning operations, and generate meaningful insights and visualizations. The system supports different tabular datasets, including CSV and Excel files, and simulates a real-world data analysis workflow.
+This project involves the design and development of Cleaning Galing, a Data Cleaning and Analytics System that allows users to upload raw datasets, perform data cleaning operations, and generate meaningful insights and visualizations. The system supports different tabular datasets, including CSV and Excel files, and simulates a real-world data analysis workflow.
 
 ## Project Objectives
 

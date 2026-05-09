@@ -1,0 +1,9 @@
+{
+  "name": "Data Cleaning and Analytics System",
+  "short_name": "Data Cleaner",
+  "description": "Offline-capable data cleaning and analytics workspace.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3f4f7",
+  "theme_color": "#6d5dfc"
+}

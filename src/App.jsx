@@ -16,15 +16,19 @@ import {
   Table2,
   Upload,
   Wand2,
+  Database,
+  AlertTriangle,
+  Copy,
+  Columns,
 } from 'lucide-react';
 
 const defaultTheme = {
   title: 'Cleaning Galing',
   subtitle: 'Upload, profile, clean, compare, analyze, and visualize tabular datasets.',
-  primary: '#6d5dfc',
-  secondary: '#25c4c2',
-  accent: '#94bfff',
-  ink: '#252636',
+  primary: '#4f46e5', // Deep Indigo
+  secondary: '#0d9488', // Premium Teal
+  accent: '#3b82f6', // Bright Blue
+  ink: '#0f172a', // Slate 900
   surface: '#ffffff',
 };
 
@@ -951,19 +955,31 @@ function App() {
 
         <nav className="top-tabs">
           {navigationTabs.map(([page, label, Icon]) => (
-            <button type="button" className={activePage === page ? 'active' : ''} onClick={() => setActivePage(page)} key={page}>
+            <button
+              type="button"
+              className={activePage === page ? 'active' : ''}
+              onClick={() => setActivePage(page)}
+              key={page}
+              disabled={page !== 'upload' && !hasData}
+              title={page !== 'upload' && !hasData ? 'Upload data first' : `Go to ${label}`}
+            >
               <Icon size={17} />
               {label}
             </button>
           ))}
         </nav>
+
+        <div className="global-actions">
+          <button onClick={clearSavedWorkspace} className="danger-btn" title="Clear all data and reset workspace">
+            <RotateCcw size={16} /> Clear Workspace
+          </button>
+        </div>
       </header>
 
       <section className="workspace">
         {activePage !== 'upload' && (
         <div className="page-heading">
           <div>
-            <p className="eyebrow">{'Upload -> Profile -> Clean -> Analyze -> Visualize'}</p>
             <h1>{pageMeta[activePage][0]}</h1>
             <p>{pageMeta[activePage][1]}</p>
           </div>
@@ -973,7 +989,7 @@ function App() {
         {activePage === 'upload' && (
         <header className="hero">
           <div>
-            <p className="eyebrow">{'Upload -> Profile -> Clean -> Analyze -> Visualize'}</p>
+            <p className="eyebrow">UPLOAD {"->"} PROFILE {"->"} CLEAN {"->"} ANALYZE {"->"} VISUALIZE</p>
             <h1>{theme.title}</h1>
             <p>{theme.subtitle}</p>
           </div>
@@ -993,9 +1009,12 @@ function App() {
               <span>or browse from your device</span>
               <button className="primary-btn" onClick={() => fileRef.current?.click()}><Upload size={18} /> Choose File</button>
             </div>
-            <button onClick={downloadCleanCsv}><Download size={18} /> Export Clean CSV</button>
-            <button onClick={clearSavedWorkspace}>Clear Saved Workspace</button>
-            {hasData && <button onClick={() => setActivePage('profile')}>Continue to Profile</button>}
+            {hasData && (
+              <div className="hero-next">
+                <p>Data loaded successfully!</p>
+                <button className="primary-action" onClick={() => setActivePage('profile')}>Continue to Profile</button>
+              </div>
+            )}
           </div>
         </header>
         )}
@@ -1003,15 +1022,11 @@ function App() {
         {activePage === 'profile' && (
         <>
         <section className="metrics" id="profile">
-          <Metric label="Rows" value={cleanProfile.rows} detail={`Original: ${originalProfile.rows}`} />
-          <Metric label="Columns" value={cleanProfile.columns} detail="Detected fields" />
-          <Metric label="Missing" value={cleanProfile.missing} detail={`Before: ${originalProfile.missing}`} />
-          <Metric label="Duplicates" value={cleanProfile.duplicateRows} detail={`Before: ${originalProfile.duplicateRows}`} />
+          <Metric label="Rows" value={cleanProfile.rows} detail={`Original: ${originalProfile.rows}`} Icon={Database} variant="indigo" />
+          <Metric label="Columns" value={cleanProfile.columns} detail="Detected fields" Icon={Columns} variant="teal" />
+          <Metric label="Missing" value={cleanProfile.missing} detail={`Before: ${originalProfile.missing}`} Icon={AlertTriangle} isWarning={cleanProfile.missing > 0} variant="amber" />
+          <Metric label="Duplicates" value={cleanProfile.duplicateRows} detail={`Before: ${originalProfile.duplicateRows}`} Icon={Copy} isWarning={cleanProfile.duplicateRows > 0} variant="purple" />
         </section>
-        <div className="page-actions">
-          <button onClick={() => setActivePage('upload')}>Back to Upload</button>
-          <button className="primary-action" onClick={() => setActivePage('clean')} disabled={!hasData}>Continue to Clean</button>
-        </div>
         </>
         )}
 
@@ -1179,89 +1194,108 @@ function App() {
 
         {activePage === 'clean' && (
         <>
+          <header className="page-heading workbench-header">
+            <div>
+              <p className="eyebrow">UPLOAD {"->"} PROFILE {"->"} CLEAN</p>
+              <h1>Cleaning Workbench</h1>
+              <p>Apply automated cleaning methods, standardize formatting, and resolve data inconsistencies.</p>
+            </div>
+          </header>
         <section className="workbench" id="clean">
-          <div className="cleaner">
+          <div className="workbench-main">
             <div className="section-title">
               <h2>Cleaning Workbench</h2>
               <div className="header-actions">
-                <button onClick={autoCleanDataset} disabled={!hasData}><Sparkles size={17} /> Auto Clean</button>
+                <button onClick={autoCleanDataset} disabled={!hasData} className="primary-btn"><Sparkles size={17} /> Auto Clean</button>
                 <button onClick={resetCleaning}><RotateCcw size={17} /> Reset</button>
               </div>
             </div>
-            <div className="clean-grid">
-              <label>
-                Target column
-                <select value={selectedColumn} onChange={(event) => setSelectedColumn(event.target.value)} disabled={!hasData}>
-                  {!hasData && <option>Upload data first</option>}
-                  {columns.map((column) => <option key={column}>{column}</option>)}
-                </select>
-              </label>
-              <label>
-                Missing values
-                <select value={missingMethod} onChange={(event) => setMissingMethod(event.target.value)}>
-                  <option value="mean">Fill mean</option>
-                  <option value="median">Fill median</option>
-                  <option value="mode">Fill mode</option>
-                  <option value="zero">Fill zero</option>
-                  <option value="blank">Fill blank</option>
-                  <option value="custom">Fill custom</option>
-                  <option value="remove-row">Remove rows</option>
-                </select>
-              </label>
-              <label>
-                Custom fill
-                <input value={customFill} onChange={(event) => setCustomFill(event.target.value)} />
-              </label>
-              <button onClick={fillMissing} disabled={!hasData}><Wand2 size={17} /> Apply Missing Fix</button>
 
-              <label>
-                Convert type
-                <select value={convertType} onChange={(event) => setConvertType(event.target.value)}>
-                  <option value="number">Number</option>
-                  <option value="text">Text</option>
-                  <option value="date">Date</option>
-                  <option value="boolean">Boolean</option>
-                </select>
-              </label>
-              <button onClick={convertColumn} disabled={!hasData}><CheckCircle2 size={17} /> Convert</button>
+            <div className="target-selector-card">
+              <div className="selector-header">
+                <Columns size={18} />
+                <strong>Select Target Column</strong>
+                <p>Choose the specific column you want to apply cleaning operations to.</p>
+              </div>
+              <select value={selectedColumn} onChange={(event) => setSelectedColumn(event.target.value)} disabled={!hasData}>
+                {!hasData && <option>Upload data first</option>}
+                {columns.map((column) => <option key={column} value={column}>{column}</option>)}
+              </select>
+            </div>
 
-              <label>
-                Standardize
-                <select value={standardizeMethod} onChange={(event) => setStandardizeMethod(event.target.value)}>
-                  <option value="trim">Trim spaces</option>
-                  <option value="upper">Uppercase</option>
-                  <option value="lower">Lowercase</option>
-                  <option value="title">Title case</option>
-                </select>
-              </label>
-              <button onClick={standardizeColumn} disabled={!hasData}><Brush size={17} /> Standardize</button>
+            <div className="tool-grid">
+              <ToolCard title="Missing Values" icon={Wand2} color="amber">
+                <p>Handle blank or null values in the selected column.</p>
+                <div className="tool-controls">
+                  <select value={missingMethod} onChange={(event) => setMissingMethod(event.target.value)}>
+                    <option value="mean">Fill mean</option>
+                    <option value="median">Fill median</option>
+                    <option value="mode">Fill mode</option>
+                    <option value="zero">Fill zero</option>
+                    <option value="blank">Fill blank</option>
+                    <option value="custom">Fill custom</option>
+                    <option value="remove-row">Remove rows</option>
+                  </select>
+                  {missingMethod === 'custom' && (
+                    <input value={customFill} onChange={(event) => setCustomFill(event.target.value)} placeholder="Custom value..." />
+                  )}
+                  <button onClick={fillMissing} disabled={!hasData || !selectedColumn} className="action-btn">Apply Fix</button>
+                </div>
+              </ToolCard>
 
-              <label>
-                Min
-                <input value={minValue} onChange={(event) => setMinValue(event.target.value)} />
-              </label>
-              <label>
-                Max
-                <input value={maxValue} onChange={(event) => setMaxValue(event.target.value)} placeholder="Optional" />
-              </label>
-              <button onClick={filterInvalid} disabled={!hasData}><Filter size={17} /> Filter Invalid</button>
-              <button onClick={removeDuplicates} disabled={!hasData}><Table2 size={17} /> Remove Duplicates</button>
+              <ToolCard title="Data Transformation" icon={RotateCcw} color="indigo">
+                <p>Convert data types or standardize text formatting.</p>
+                <div className="tool-controls">
+                  <div className="control-group">
+                    <small>Type Conversion</small>
+                    <div className="inline-action">
+                      <select value={convertType} onChange={(event) => setConvertType(event.target.value)}>
+                        <option value="number">Number</option>
+                        <option value="text">Text</option>
+                        <option value="date">Date</option>
+                        <option value="boolean">Boolean</option>
+                      </select>
+                      <button onClick={convertColumn} disabled={!hasData || !selectedColumn} title="Convert Type"><CheckCircle2 size={16} /></button>
+                    </div>
+                  </div>
+                  <div className="control-group">
+                    <small>Text Standardization</small>
+                    <div className="inline-action">
+                      <select value={standardizeMethod} onChange={(event) => setStandardizeMethod(event.target.value)}>
+                        <option value="trim">Trim spaces</option>
+                        <option value="upper">Uppercase</option>
+                        <option value="lower">Lowercase</option>
+                        <option value="title">Title case</option>
+                      </select>
+                      <button onClick={standardizeColumn} disabled={!hasData || !selectedColumn} title="Apply Formatting"><Brush size={16} /></button>
+                    </div>
+                  </div>
+                </div>
+              </ToolCard>
+
+              <ToolCard title="Validation & Filtering" icon={Filter} color="teal">
+                <p>Filter rows based on numeric ranges or remove duplicates.</p>
+                <div className="tool-controls">
+                  <div className="range-inputs">
+                    <input value={minValue} onChange={(event) => setMinValue(event.target.value)} placeholder="Min" />
+                    <input value={maxValue} onChange={(event) => setMaxValue(event.target.value)} placeholder="Max (optional)" />
+                  </div>
+                  <button onClick={filterInvalid} disabled={!hasData || !selectedColumn} className="action-btn">Filter Invalid</button>
+                  <button onClick={removeDuplicates} disabled={!hasData} className="secondary-btn"><Table2 size={17} /> Deduplicate Entire Set</button>
+                </div>
+              </ToolCard>
             </div>
           </div>
 
           <div className="insights" id="analyze">
-            <h2>Insights</h2>
+            <h2>System Insights</h2>
             {insights.map((insight) => <p key={insight}>{insight}</p>)}
-            <h3>Cleaning Log</h3>
-            <ul>
+            <h3>Action History</h3>
+            <ul className="history-list">
               {history.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}
             </ul>
           </div>
         </section>
-        <div className="page-actions">
-          <button onClick={() => setActivePage('profile')}>Back to Profile</button>
-          <button className="primary-action" onClick={() => setActivePage('analyze')} disabled={!hasData}>Continue to Analyze</button>
-        </div>
         </>
         )}
 
@@ -1276,12 +1310,17 @@ function App() {
                   : `${fileName} - highlighted cells show changed values`}
               </p>
             </div>
-            {activePage === 'clean' && (
-            <div className="segmented">
-              <button className={activeView === 'original' ? 'active' : ''} onClick={() => setActiveView('original')}>Original</button>
-              <button className={activeView === 'cleaned' ? 'active' : ''} onClick={() => setActiveView('cleaned')}>Cleaned</button>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              {activePage === 'clean' && (
+              <div className="segmented">
+                <button className={activeView === 'original' ? 'active' : ''} onClick={() => setActiveView('original')}>Original</button>
+                <button className={activeView === 'cleaned' ? 'active' : ''} onClick={() => setActiveView('cleaned')}>Cleaned</button>
+              </div>
+              )}
+              <button onClick={downloadCleanCsv} disabled={!hasData} className="primary-action" title="Export cleaned data as CSV">
+                <Download size={16} /> Export CSV
+              </button>
             </div>
-            )}
           </div>
           {activePage === 'clean' && (
           <div className={`comparison-summary ${cleaningApplied ? 'active' : ''}`}>
@@ -1312,6 +1351,12 @@ function App() {
               <EmptyChart message="Upload a CSV or Excel file to preview your dataset." />
             )}
           </div>
+          {activePage === 'clean' && (
+            <div className="page-actions workbench-footer">
+              <button onClick={() => setActivePage('profile')}>Back to Profile</button>
+              <button className="primary-action" onClick={() => setActivePage('analyze')} disabled={!hasData}>Proceed to Analysis</button>
+            </div>
+          )}
         </section>
         )}
 
@@ -1339,8 +1384,8 @@ function App() {
                   {cleanProfile.columnProfiles.map((profile) => (
                     <tr key={profile.column}>
                       <td>{profile.column}</td>
-                      <td><span className="type-pill">{profile.type}</span></td>
-                      <td>{profile.missing}</td>
+                      <td><span className={`type-pill type-${profile.type}`}>{profile.type}</span></td>
+                      <td className={profile.missing > 0 ? 'warning-text bold' : 'success-text'}>{profile.missing}</td>
                       <td>{profile.unique}</td>
                       <td>{String(profile.frequent)}</td>
                       <td>{profile.mean === null ? '-' : formatNumber(profile.mean)}</td>
@@ -1357,27 +1402,156 @@ function App() {
         </section>
         )}
 
+        {activePage === 'profile' && (
+        <div className="page-actions" style={{ justifyContent: 'space-between', padding: '24px 0', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+          <button onClick={() => setActivePage('upload')}>Back to Upload</button>
+          <button className="primary-action" onClick={() => setActivePage('clean')} disabled={!hasData}>Continue to Clean</button>
+        </div>
+        )}
+
         {activePage === 'analyze' && (
         <section className="analyze-page">
-          <div className="insights" id="analyze">
-            <h2>Insights</h2>
-            {insights.map((insight) => <p key={insight}>{insight}</p>)}
-            <h3>Cleaning Log</h3>
-            <ul>
-              {history.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}
-            </ul>
+          <header className="page-heading insights-header">
+            <div>
+              <p className="eyebrow">UPLOAD {"->"} PROFILE {"->"} CLEAN {"->"} ANALYZE</p>
+              <h1>Insights & Interpretations</h1>
+              <p>Review the generated data diagnostics, cleaning summaries, and contextual interpretations.</p>
+            </div>
+          </header>
+          <div className="insights-grid">
+            <Card title="System Diagnostics" menu="Auto-Generated">
+              <div className="insight-content">
+                {insights.map((insight, idx) => (
+                  <div key={idx} className="insight-item">
+                    <CheckCircle2 size={16} className="status-icon" />
+                    <p>{insight}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card title="Cleaning Operation Log" menu="Session History">
+              <ul className="history-list">
+                {history.map((item, index) => (
+                  <li key={`${item}-${index}`}>
+                    <RotateCcw size={14} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </Card>
           </div>
-          <section className="notes">
-          {notes.map((note, index) => (
-            <article key={`${note}-${index}`}>
-              <strong>Text Block {notes.length - index}</strong>
-              <p>{note}</p>
-            </article>
-          ))}
+
+          <section className="notes-area">
+            <h3>Contextual Interpretations</h3>
+            <div className="notes-grid">
+              {notes.map((note, index) => (
+                <article key={`${note}-${index}`} className="note-card">
+                  <header>
+                    <strong>Interpretation {notes.length - index}</strong>
+                  </header>
+                  <p>{note}</p>
+                </article>
+              ))}
+            </div>
           </section>
-          <div className="page-actions">
+
+          <div className="page-actions sticky-footer">
             <button onClick={() => setActivePage('clean')}>Back to Clean</button>
-            <button className="primary-action" onClick={() => setActivePage('visualize')} disabled={!hasData}>Continue to Visualize</button>
+            <button className="primary-action" onClick={() => setActivePage('visualize')} disabled={!hasData}>Proceed to Visualization</button>
+          </div>
+        </section>
+        )}
+
+        {activePage === 'visualize' && (
+        <section className="visualize-page">
+          <div className="visualize-layout">
+            <aside className="diagram-controls card">
+              <div className="control-section">
+                <h3>Chart Strategy</h3>
+                <div className="diagram-mode">
+                  <button className={diagramType === 'bar' ? 'active' : ''} onClick={() => setDiagramType('bar')}><BarChart3 size={16} /> Bar</button>
+                  <button className={diagramType === 'line' ? 'active' : ''} onClick={() => setDiagramType('line')}><LineChart size={16} /> Line</button>
+                  <button className={diagramType === 'pie' ? 'active' : ''} onClick={() => setDiagramType('pie')}><PieChart size={16} /> Pie</button>
+                  <button className={diagramType === 'scatter' ? 'active' : ''} onClick={() => setDiagramType('scatter')}><Copy size={16} /> Scatter</button>
+                </div>
+              </div>
+
+              <div className="control-divider" />
+
+              <div className="control-section">
+                <h3>Data Mapping</h3>
+                <div className="mapping-inputs">
+                  <div className="control-field">
+                    <small>Primary Variable (X-Axis / Category)</small>
+                    <select value={diagramCategory} onChange={(e) => setDiagramCategory(e.target.value)}>
+                      <option value="">Select Column</option>
+                      {columns.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="control-field">
+                    <small>Secondary Variable (Y-Axis / Value)</small>
+                    <select value={diagramValue} onChange={(e) => setDiagramValue(e.target.value)}>
+                      <option value="">Select Column</option>
+                      {numericColumns.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+
+                  {diagramType === 'scatter' && (
+                    <>
+                      <div className="control-field">
+                        <small>X-Axis (Numeric Only)</small>
+                        <select value={diagramX} onChange={(e) => setDiagramX(e.target.value)}>
+                          <option value="">Select Column</option>
+                          {numericColumns.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div className="control-field">
+                        <small>Y-Axis (Numeric Only)</small>
+                        <select value={diagramY} onChange={(e) => setDiagramY(e.target.value)}>
+                          <option value="">Select Column</option>
+                          {numericColumns.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div className="control-field">
+                        <small>Color Dimension (Categorical)</small>
+                        <select value={diagramColor} onChange={(e) => setDiagramColor(e.target.value)}>
+                          <option value="">Select Column</option>
+                          {textColumns.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </aside>
+
+            <main className="diagram-builder">
+              <header className="builder-header">
+                <h2>{diagramType.toUpperCase()} Chart Preview</h2>
+                <div className="builder-meta">
+                  <span>{fileName}</span>
+                  <div className="status-pill">Active Plot</div>
+                </div>
+              </header>
+              <div className="chart-canvas">
+                <DiagramRenderer 
+                  type={diagramType} 
+                  data={dashboard.diagram} 
+                  rows={cleanRows}
+                  xColumn={diagramX}
+                  yColumn={diagramY}
+                  colorColumn={diagramColor}
+                  theme={theme} 
+                />
+              </div>
+            </main>
+          </div>
+
+          <div className="page-actions sticky-footer">
+            <button onClick={() => setActivePage('analyze')}>Back to Insights</button>
+            <button className="primary-action magic-btn" onClick={() => window.print()}>Export Dashboard PDF</button>
           </div>
         </section>
         )}
@@ -1386,12 +1560,16 @@ function App() {
   );
 }
 
-function Metric({ label, value, detail }) {
+function Metric({ label, value, detail, Icon, isWarning, variant }) {
+  const colorClass = isWarning ? 'warning-metric' : (variant ? `metric-${variant}` : '');
   return (
-    <article className="metric-card">
-      <span>{label}</span>
+    <article className={`metric-card ${colorClass}`}>
+      <div className="metric-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '800' }}>
+        {Icon && <Icon size={18} />}
+        <span>{label}</span>
+      </div>
       <strong>{formatNumber(value)}</strong>
-      <small>{detail}</small>
+      <small style={{ fontWeight: '500' }}>{detail}</small>
     </article>
   );
 }
@@ -1416,6 +1594,22 @@ function WorkflowStrip({ pages, activePage, hasData, onNavigate }) {
         );
       })}
     </div>
+  );
+}
+
+function ToolCard({ title, icon: Icon, color, children }) {
+  return (
+    <article className={`tool-card variant-${color}`}>
+      <header>
+        <div className="icon-box">
+          <Icon size={18} />
+        </div>
+        <h3>{title}</h3>
+      </header>
+      <div className="tool-content">
+        {children}
+      </div>
+    </article>
   );
 }
 
